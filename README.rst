@@ -7,7 +7,7 @@ hand. It is specifically aimed at fixing problems that tend to occur in the real
 
 refactor.py has the following features:
   
-- Rewrite `from a import *` statements to only import what's necessary.
+- Rewrite ``from a import *`` statements to only import what's necessary.
 
 - Extract definitions (i.e. classes, functions, constants, etc) from one module to another (possibly new) module,
   removing unneeded imports and filling in necessary imports as appropriate. This allows you to decompose monolithic modules
@@ -19,7 +19,7 @@ refactor.py has the following features:
 
 - Eliminate redundant boolean statements.
 
-  For example. `refactor.py` will transform::
+  For example. ``refactor.py`` will transform::
   
     def foo():
       if a:
