@@ -2,7 +2,7 @@
 refactor.py
 ===========
 
-refactor.py is a script to help Python programmers refactor modules, automating many of the things you would do otherwise by
+**refactor.py** is a script to help Python programmers refactor modules, automating many of the things you would do otherwise by
 hand. It is specifically aimed at fixing problems that tend to occur in the real-world.
 
 refactor.py has the following features:
@@ -30,7 +30,7 @@ refactor.py has the following features:
         return True
       return False
       
-  Into:
+  Into::
   
     def foo():
       return -a and -b or c
