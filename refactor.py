@@ -19,24 +19,52 @@ def get_imports(tree):
     return visitor.imports
 
 
-class NameVisitor(ast.NodeVisitor):
+class ModuleLocalsVisitor(ast.NodeVisitor):
     """Fetches all the names in an AST."""
     def __init__(self):
-        self.names = set()
+        self.locals_ = set()
+
+    def visit_ClassDef(self, node):
+        self.locals_.add(node.name)
+
+    def visit_FunctionDef(self, node):
+        self.locals_.add(node.name)
+
+    def visit_ImportFrom(self, node):
+        for alias in node.names:
+            self.locals_.add(alias.name)
+
+    def visit_Import(self, node):
+        for alias in node.names:
+            self.locals_.add(alias.name)
 
     def visit_Name(self, node):
-        self.names.add(node.id)
+        self.locals_.add(node.id)
 
 
-def get_names(tree):
-    visitor = NameVisitor()
+class FunctionLocalsVisitor(ast.NodeVisitor):
+    """Fetches all the names in an AST."""
+    def __init__(self):
+        self.locals_ = set()
+
+    def visit_Name(self, node):
+        self.locals_.add(node.id)
+
+
+def get_module_locals(tree):
+    visitor = ModuleLocalsVisitor()
     visitor.visit(tree)
-    return visitor.names
+    return visitor.locals_
 
 
-def get_imports_used(tree, imports):
-    local_names = get_names(tree)
-    imported_names = {
-        node.name for import_ in imports for node in import_.names
-    }
-    return local_names & imported_names
+def get_function_locals(tree):
+    visitor = FunctionLocalsVisitor()
+    visitor.visit(tree)
+    return visitor.locals_
+
+
+def get_names_used(tree, node):
+    """Get all names in *tree* used by *node*."""
+    module_locals = get_module_locals(tree)
+    function_locals = get_function_locals(node)
+    return module_locals & function_locals
