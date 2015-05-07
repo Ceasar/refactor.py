@@ -32,13 +32,13 @@ def test_get_names_used():
         'class X(object):',
         '   pass',
         '',
-        'def bar():',
+        'def bar(y):',
         '   x = X()',
         '   foo()',
         '   ast.parse("")',
     ]))
     source = '\n'.join([
-        'def bar():',
+        'def bar(y):',
         '   x = X()',
         '   foo()',
         '   ast.parse("")',
