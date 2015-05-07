@@ -1,7 +1,6 @@
 import ast
 
-from refactor import (get_imported_names, get_imports, get_imports_used,
-                      get_names)
+from refactor import (get_imports, get_imports_used, get_names)
 
 
 def test_get_imports():
@@ -13,17 +12,11 @@ def test_get_imports():
     assert len(get_imports(tree)) == 2
 
 
-def test_get_imported_names():
-    source = '\n'.join([
+def test_get_imports_used():
+    imports = get_imports('\n'.join([
         'import ast',
         'from os import path',
-    ])
-    tree = ast.parse(source)
-    assert get_imported_names(tree) == {'ast', 'path'}
-
-
-def test_get_imports_used():
-    imports = {'ast', 'path'}
+    ]))
     source = '\n'.join([
         'def foo():',
         '   ast.parse("")',

@@ -19,12 +19,6 @@ def get_imports(tree):
     return visitor.imports
 
 
-def get_imported_names(tree):
-    visitor = ImportVisitor()
-    visitor.visit(tree)
-    return {node.name for import_ in visitor.imports for node in import_.names}
-
-
 class NameVisitor(ast.NodeVisitor):
     """Fetches all the names in an AST."""
     def __init__(self):
@@ -41,4 +35,8 @@ def get_names(tree):
 
 
 def get_imports_used(tree, imports):
-    return get_names(tree) & imports
+    local_names = get_names(tree)
+    imported_names = {
+        node.name for import_ in imports for node in import_.names
+    }
+    return local_names & imported_names
