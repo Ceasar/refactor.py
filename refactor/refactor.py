@@ -62,6 +62,15 @@ def get_module_locals(tree):
 
 
 def get_function_locals(tree):
+    """
+    Get all the names used by the function at *tree*.
+
+    >>> sorted(get_function_locals(ast.parse('\\n'.join([
+    ... 'def foo():',
+    ... '   x = list()',
+    ... ]))))
+    ['list', 'x']
+    """
     visitor = FunctionLocalsVisitor()
     visitor.visit(tree)
     return visitor.locals_
