@@ -1,6 +1,11 @@
+"""
+Implement several functions for manipulating ASTs of modules.
+"""
 import ast
 
 import astor
+
+NODES_IMPORT = ast.Import, ast.ImportFrom
 
 
 class ImportVisitor(ast.NodeVisitor):
@@ -94,7 +99,7 @@ def branch(tree, node, module_name):
     to_import = set()
     for name in names_used:
         dependency_node = module_locals[name]
-        if type(dependency_node) in (ast.Import, ast.ImportFrom):
+        if type(dependency_node) in NODES_IMPORT:
             new_tree.body.append(module_locals[name])
         else:
             to_import.add(name)
@@ -119,3 +124,34 @@ def move_node(fp, name):
 
 def to_source(node):
     return astor.codegen.to_source(node)
+
+
+def get_dependencies(tree):
+    """
+    Get a dictionary representing the dependencies between definitions in a
+    module.
+
+    >>> tree = ast.parse('\\n'.join([
+    ...     'import foo',
+    ...     'def bar():',
+    ...     '   return foo + "x"',
+    ...     'def foobar():',
+    ...     '   return bar() + foo',
+    ... ]))
+    >>> get_dependencies(tree) == {
+    ...     'foo': set([]),
+    ...     'bar': set(['foo']),
+    ...     'foobar': set(['foo', 'bar']),
+    ... }
+    True
+    """
+    deps = {}
+    module_locals = get_module_locals(tree)
+    for name, node in module_locals.items():
+        if type(node) in NODES_IMPORT:
+            deps[name] = set()
+        elif type(node) == ast.FunctionDef:
+            deps[name] = set(module_locals) & get_function_locals(node)
+        else:
+            raise ValueError("Can't get dependencies for {}".format(name))
+    return deps

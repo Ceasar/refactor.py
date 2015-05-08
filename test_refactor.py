@@ -1,6 +1,7 @@
 import ast
 
-from refactor.refactor import get_imports, get_function_locals, get_names_used
+from refactor.refactor import (get_dependencies, get_imports,
+                               get_function_locals, get_names_used)
 
 
 def test_get_imports():
@@ -44,3 +45,18 @@ def test_get_names_used():
     tree = ast.parse('\n'.join(source))
     node = ast.parse('\n'.join(func)).body[0]
     assert get_names_used(tree, node) == {'A', 'X', 'ast', 'foo'}
+
+
+def test_get_dependencies():
+    tree = ast.parse('\n'.join([
+        'import foo',
+        'def bar():',
+        '   return foo + "x"',
+        'def foobar():',
+        '   return bar() + foo',
+    ]))
+    assert get_dependencies(tree) == {
+        'foo': set([]),
+        'bar': set(['foo']),
+        'foobar': set(['foo', 'bar']),
+    }
