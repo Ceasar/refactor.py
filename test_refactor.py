@@ -1,7 +1,8 @@
 import ast
 
 from refactor.refactor import (get_class_locals, get_dependencies,
-                               get_function_locals, get_names_used)
+                               get_function_locals, get_module_locals,
+                               get_names_used)
 
 
 def test_get_function_locals():
@@ -74,3 +75,24 @@ def test_get_class_locals():
     ]
     node = ast.parse('\n'.join(source))
     assert get_class_locals(node) == {'list', 'object', 'z'}
+
+
+def test_get_module_locals():
+    source = [
+        'import ast',
+        'from os import path',
+        'from pprint import pprint as pp',
+        'import re as r',
+        '',
+        'A = ""',
+        '',
+        'def foo():',
+        '   return True',
+        '',
+        'class X(object):',
+        '   pass',
+        '',
+    ]
+    node = ast.parse('\n'.join(source))
+    assert set(get_module_locals(node)) == {'A', 'X', 'ast', 'foo', 'path',
+                                            'pp', 'r'}

@@ -26,11 +26,13 @@ class ModuleLocalsVisitor(ast.NodeVisitor):
 
     def visit_ImportFrom(self, node):
         for alias in node.names:
-            self.locals_[alias.name] = node
+            name = alias.asname if alias.asname else alias.name
+            self.locals_[name] = node
 
     def visit_Import(self, node):
         for alias in node.names:
-            self.locals_[alias.name] = node
+            name = alias.asname if alias.asname else alias.name
+            self.locals_[name] = node
 
     def visit_Name(self, node):
         # Avoid adding uses of a name
