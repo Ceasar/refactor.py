@@ -81,6 +81,53 @@ def get_function_locals(tree):
     return visitor.locals_
 
 
+class ClassLocalsVisitor(ast.NodeVisitor):
+    """Fetches all the names in an AST."""
+    def __init__(self):
+        self.locals_ = set()
+        self.scope_stack = []
+
+    def visit_Assign(self, node):
+        if self.scope_stack:
+            self.generic_visit(node)
+        else:
+            # *node* is class variable. Only visit the right hand side.
+            self.generic_visit(node.value)
+
+    def visit_FunctionDef(self, node):
+        locals_ = self.locals_.copy()
+        self.scope_stack.append(node)
+        self.generic_visit(node)
+        assert self.scope_stack.pop() == node
+        scoped_names = {name.id for name in node.args.args}
+        if node.args.vararg:
+            scoped_names.add(node.args.vararg)
+        if node.args.kwarg:
+            scoped_names.add(node.args.kwarg)
+        new_names = self.locals_ - locals_
+        self.locals_ -= new_names & scoped_names
+
+    def visit_Name(self, node):
+        self.locals_.add(node.id)
+
+
+def get_class_locals(node):
+    """
+    Get all the names used by the function at *tree*.
+
+    >>> sorted(get_function_locals(ast.parse('\\n'.join([
+    ... 'class Bar(object):',
+    ... '   classvar = list()',
+    ... '   def method(self, x, y=1, *args, **kwargs):',
+    ... '       return x + y + z',
+    ... ]))))
+    ['list', 'object', 'z']
+    """
+    visitor = ClassLocalsVisitor()
+    visitor.visit(node)
+    return visitor.locals_
+
+
 def get_names_used(tree, node):
     """Get all names in *tree* used by *node*."""
     module_locals = set(get_module_locals(tree))
@@ -150,6 +197,8 @@ def get_dependencies(tree):
     for name, node in module_locals.items():
         if type(node) in NODES_IMPORT:
             deps[name] = set()
+        elif type(node) == ast.ClassDef:
+            deps[name] = set(module_locals) & get_class_locals(node)
         elif type(node) == ast.FunctionDef:
             deps[name] = set(module_locals) & get_function_locals(node)
         else:

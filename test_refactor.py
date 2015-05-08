@@ -1,6 +1,6 @@
 import ast
 
-from refactor.refactor import (get_dependencies, get_imports,
+from refactor.refactor import (get_class_locals, get_dependencies, get_imports,
                                get_function_locals, get_names_used)
 
 
@@ -60,3 +60,26 @@ def test_get_dependencies():
         'bar': set(['foo']),
         'foobar': set(['foo', 'bar']),
     }
+
+
+def test_get_dependencies_class():
+    tree = ast.parse('\n'.join([
+        'import foo',
+        'class Bar(foo):',
+        '   pass'
+    ]))
+    assert get_dependencies(tree) == {
+        'foo': set([]),
+        'Bar': set(['foo']),
+    }
+
+
+def test_get_class_locals():
+    source = [
+        'class Bar(object):',
+        '   classvar = list()',
+        '   def method(self, x, y=1, *args, **kwargs):',
+        '       return x + y + z',
+    ]
+    node = ast.parse('\n'.join(source))
+    assert get_class_locals(node) == {'list', 'object', 'z'}
