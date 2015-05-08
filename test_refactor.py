@@ -1,6 +1,6 @@
 import ast
 
-from refactor import (get_imports, get_function_locals, get_names_used)
+from refactor.refactor import get_imports, get_function_locals, get_names_used
 
 
 def test_get_imports():
@@ -22,7 +22,13 @@ def test_get_function_locals():
 
 
 def test_get_names_used():
-    tree = ast.parse('\n'.join([
+    func = [
+        'def bar(y):',
+        '   x = X()',
+        '   foo()',
+        '   ast.parse(A)',
+    ]
+    source = [
         'import ast',
         'from os import path',
         '',
@@ -34,16 +40,7 @@ def test_get_names_used():
         'class X(object):',
         '   pass',
         '',
-        'def bar(y):',
-        '   x = X()',
-        '   foo()',
-        '   ast.parse(A)',
-    ]))
-    source = '\n'.join([
-        'def bar(y):',
-        '   x = X()',
-        '   foo()',
-        '   ast.parse(A)',
-    ])
-    node = ast.parse(source).body[0]
+    ] + func
+    tree = ast.parse('\n'.join(source))
+    node = ast.parse('\n'.join(func)).body[0]
     assert get_names_used(tree, node) == {'A', 'X', 'ast', 'foo'}

@@ -1,5 +1,4 @@
 import ast
-import sys
 
 import astor
 
@@ -75,10 +74,11 @@ def get_names_used(tree, node):
     return module_locals & function_locals
 
 
-def move_node(tree, node, new_tree, module_name):
+def branch(tree, node, module_name):
     """
     Move *node* in *tree* and all of its dependences to *new_tree*.
     """
+    new_tree = ast.parse('')
     names_used = get_names_used(tree, node)
     module_locals = get_module_locals(tree)
     # if it's an import, import it, otherwise import it from this module
@@ -98,16 +98,15 @@ def move_node(tree, node, new_tree, module_name):
     return new_tree
 
 
-def main(name):
-    with open('refactor.py') as fp:
-        tree = ast.parse(fp.read())
+def move_node(fp, name):
+    tree = ast.parse(fp.read())
     nodes = get_module_locals(tree)
-    new_tree = move_node(tree, nodes[name], ast.parse(''), 'refactor.py')
-    return to_source(new_tree)
+    try:
+        node = nodes[name]
+    except KeyError:
+        raise ValueError('{} not in {}'.format(name, nodes.keys()))
+    return to_source(branch(tree, node, fp.name))
 
 
 def to_source(node):
     return astor.codegen.to_source(node)
-
-if __name__ == '__main__':
-    print main(sys.argv[1])
