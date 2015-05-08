@@ -26,6 +26,8 @@ def test_get_names_used():
         'import ast',
         'from os import path',
         '',
+        'A = ""',
+        '',
         'def foo():',
         '   return True',
         '',
@@ -35,13 +37,13 @@ def test_get_names_used():
         'def bar(y):',
         '   x = X()',
         '   foo()',
-        '   ast.parse("")',
+        '   ast.parse(A)',
     ]))
     source = '\n'.join([
         'def bar(y):',
         '   x = X()',
         '   foo()',
-        '   ast.parse("")',
+        '   ast.parse(A)',
     ])
     node = ast.parse(source).body[0]
-    assert get_names_used(tree, node) == {'X', 'ast', 'foo'}
+    assert get_names_used(tree, node) == {'A', 'X', 'ast', 'foo'}
