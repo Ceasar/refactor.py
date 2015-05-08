@@ -9,24 +9,6 @@ import astor
 NODES_IMPORT = ast.Import, ast.ImportFrom
 
 
-class ImportVisitor(ast.NodeVisitor):
-    """Fetches all the import statements in an AST."""
-    def __init__(self):
-        self.imports = []
-
-    def visit_ImportFrom(self, node):
-        self.imports.append(node)
-
-    def visit_Import(self, node):
-        self.imports.append(node)
-
-
-def get_imports(tree):
-    visitor = ImportVisitor()
-    visitor.visit(tree)
-    return visitor.imports
-
-
 class ModuleLocalsVisitor(ast.NodeVisitor):
     """Fetches all the names in an AST."""
     def __init__(self):

@@ -1,16 +1,7 @@
 import ast
 
-from refactor.refactor import (get_class_locals, get_dependencies, get_imports,
+from refactor.refactor import (get_class_locals, get_dependencies,
                                get_function_locals, get_names_used)
-
-
-def test_get_imports():
-    source = '\n'.join([
-        'import ast',
-        'from os import path',
-    ])
-    tree = ast.parse(source)
-    assert len(get_imports(tree)) == 2
 
 
 def test_get_function_locals():
