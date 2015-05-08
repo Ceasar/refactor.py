@@ -77,15 +77,21 @@ def get_names_used(tree, node):
     return module_locals & function_locals
 
 
-def move_node(tree, node, new_tree):
+def move_node(tree, node, new_tree, module_name):
     """
     Move *node* in *tree* and all of its dependences to *new_tree*.
     """
     names_used = get_names_used(tree, node)
     module_locals = get_module_locals(tree)
     # if it's an import, import it, otherwise import it from this module
+    to_import = []
     for name in names_used:
-        new_tree.body.append(module_locals[name])
+        dependency_node = module_locals[name]
+        if type(dependency_node) in (ast.Import, ast.ImportFrom):
+            new_tree.body.append(module_locals[name])
+        else:
+            to_import.append(ast.alias(name, None))
+    new_tree.body.append(ast.ImportFrom(module_name, to_import, 0))
     new_tree.body.append(node)
     return new_tree
 
@@ -94,7 +100,7 @@ def main(name):
     with open('refactor.py') as fp:
         tree = ast.parse(fp.read())
     nodes = get_module_locals(tree)
-    new_tree = move_node(tree, nodes[name], ast.parse(''))
+    new_tree = move_node(tree, nodes[name], ast.parse(''), 'refactor.py')
     Unparser(new_tree, sys.stdout)
     print
 
