@@ -1,9 +1,7 @@
 import ast
 import sys
 
-from unparse import Unparser
-
-# TODO: Combine Unparser with PEP8 fix to fix all the style issues?
+import astor
 
 
 class ImportVisitor(ast.NodeVisitor):
@@ -105,8 +103,11 @@ def main(name):
         tree = ast.parse(fp.read())
     nodes = get_module_locals(tree)
     new_tree = move_node(tree, nodes[name], ast.parse(''), 'refactor.py')
-    Unparser(new_tree, sys.stdout)
-    print
+    return to_source(new_tree)
+
+
+def to_source(node):
+    return astor.codegen.to_source(node)
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    print main(sys.argv[1])
