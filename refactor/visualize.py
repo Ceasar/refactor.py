@@ -11,6 +11,7 @@ def draw(deps):
         for neighbor in neighbors:
             graph.add_edge(node, neighbor)
     pos = nx.spring_layout(graph, iterations=100)
-    nx.draw(graph, pos)
+    nx.draw_networkx_nodes(graph, pos, node_color=[1 if deps.get(node) else 0 for node in graph.nodes()])
+    nx.draw_networkx_edges(graph, pos)
     nx.draw_networkx_labels(graph, pos)
     plt.show()
