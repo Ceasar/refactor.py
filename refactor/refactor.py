@@ -31,6 +31,10 @@ class ModuleLocalsVisitor(ast.NodeVisitor):
     def __init__(self):
         self.locals_ = {}
 
+    def visit_Assign(self, node):
+        for target in node.targets:
+            self.locals_[target.id] = node
+
     def visit_ClassDef(self, node):
         self.locals_[node.name] = node
 
@@ -51,7 +55,7 @@ class ModuleLocalsVisitor(ast.NodeVisitor):
             self.locals_[node.id] = node
 
 
-class FunctionLocalsVisitor(ast.NodeVisitor):
+class NamesVisitor(ast.NodeVisitor):
     """Fetches all the names in an AST."""
     def __init__(self):
         self.locals_ = set()
@@ -76,7 +80,7 @@ def get_function_locals(tree):
     ... ]))))
     ['list', 'x']
     """
-    visitor = FunctionLocalsVisitor()
+    visitor = NamesVisitor()
     visitor.visit(tree)
     return visitor.locals_
 
@@ -201,6 +205,10 @@ def get_dependencies(tree):
             deps[name] = set(module_locals) & get_class_locals(node)
         elif type(node) == ast.FunctionDef:
             deps[name] = set(module_locals) & get_function_locals(node)
+        elif type(node) == ast.Assign:
+            deps[name] = get_function_locals(node.value)
         else:
-            raise ValueError("Can't get dependencies for {}".format(name))
+            raise ValueError(
+                "Can't get dependencies for {} ({})".format(name, node)
+            )
     return deps
