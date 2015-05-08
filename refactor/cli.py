@@ -8,10 +8,10 @@ import refactor
 
 @click.command()
 @click.argument('filename')
-@click.argument('name')
-def move_node(filename, name):
+@click.argument('names', nargs=-1)
+def move_nodes(filename, names):
     with open(filename) as fp:
-        click.echo(refactor.move_node(ast.parse(fp.read()), name, fp.name))
+        click.echo(refactor.move_nodes(ast.parse(fp.read()), names, fp.name))
 
 
 @click.command()
@@ -26,5 +26,5 @@ def list_dependencies(filename):
 def cli():
     pass
 
-cli.add_command(move_node)
+cli.add_command(move_nodes)
 cli.add_command(list_dependencies)

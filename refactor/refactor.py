@@ -2,6 +2,7 @@
 Implement several functions for manipulating ASTs of modules.
 """
 import ast
+import collections
 
 import astor
 
@@ -143,34 +144,72 @@ def branch(tree, node, module_name):
     """
     Move *node* in *tree* and all of its dependences to *new_tree*.
     """
-    new_tree = ast.parse('')
-    names_used = get_names_used(tree, node)
     module_locals = get_module_locals(tree)
-    # if it's an import, import it, otherwise import it from this module
-    to_import = set()
-    for name in names_used:
-        dependency_node = module_locals[name]
-        if type(dependency_node) in NODES_IMPORT:
-            new_tree.body.append(module_locals[name])
+    nodes = {
+        name: (
+            module_locals[name]
+            if type(module_locals[name]) in NODES_IMPORT else
+            ast.ImportFrom(
+                module_name,
+                [ast.alias(name, None)],
+                0
+            )
+        )
+        for name in get_names_used(tree, node)
+    }
+    nodes[''] = node  # This name is discarded
+    return make_tree(nodes)
+
+
+def make_tree(nodes):
+    """
+    Build an AST from a map from names to nodes.
+
+    :param nodes:
+        A map from names to nodes.
+    """
+    new_tree = ast.parse('')
+    definitions = []
+    import_from = collections.defaultdict(list)
+    for name, node in nodes.items():
+        if type(node) == ast.Import:
+            new_tree.body.append(node)
+        elif type(node) == ast.ImportFrom:
+            import_from[node.module].append(name)
         else:
-            to_import.add(name)
-    new_tree.body.append(ast.ImportFrom(
-        module_name,
-        [ast.alias(name, None) for name in sorted(to_import)],
-        0
-    ))
-    new_tree.body.append(node)
+            definitions.append(node)
+    for identifier, names in import_from.items():
+        new_tree.body.append(ast.ImportFrom(
+            identifier,
+            [ast.alias(name, None) for name in sorted(names)],
+            0
+        ))
+    for definition in definitions:
+        new_tree.body.append(definition)
     return new_tree
 
 
-def move_node(tree, name, module_name):
+def move_nodes(tree, names, module_name):
     nodes = get_module_locals(tree)
-    try:
-        node = nodes[name]
-    except KeyError:
-        raise ValueError('{} not in {}'.format(name, nodes.keys()))
-    else:
-        return to_source(branch(tree, node, module_name))
+    new_tree = ast.parse('')
+    for name in names:
+        try:
+            node = nodes[name]
+        except KeyError:
+            raise ValueError('{} not in {}'.format(name, nodes.keys()))
+        else:
+            new_tree = merge_nodes(new_tree, branch(tree, node, module_name))
+    return to_source(new_tree)
+
+
+def merge_nodes(*nodes):
+    """
+    Merge two module nodes together by resolving common dependencies.
+    """
+    module_locals = {}
+    for node in nodes:
+        module_locals.update(get_module_locals(node))
+    return make_tree(module_locals)
 
 
 def to_source(node):
