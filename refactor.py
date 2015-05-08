@@ -84,14 +84,18 @@ def move_node(tree, node, new_tree, module_name):
     names_used = get_names_used(tree, node)
     module_locals = get_module_locals(tree)
     # if it's an import, import it, otherwise import it from this module
-    to_import = []
+    to_import = set()
     for name in names_used:
         dependency_node = module_locals[name]
         if type(dependency_node) in (ast.Import, ast.ImportFrom):
             new_tree.body.append(module_locals[name])
         else:
-            to_import.append(ast.alias(name, None))
-    new_tree.body.append(ast.ImportFrom(module_name, to_import, 0))
+            to_import.add(name)
+    new_tree.body.append(ast.ImportFrom(
+        module_name,
+        [ast.alias(name, None) for name in sorted(to_import)],
+        0
+    ))
     new_tree.body.append(node)
     return new_tree
 
