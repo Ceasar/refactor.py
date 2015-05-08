@@ -163,14 +163,14 @@ def branch(tree, node, module_name):
     return new_tree
 
 
-def move_node(fp, name):
-    tree = ast.parse(fp.read())
+def move_node(tree, name, module_name):
     nodes = get_module_locals(tree)
     try:
         node = nodes[name]
     except KeyError:
         raise ValueError('{} not in {}'.format(name, nodes.keys()))
-    return to_source(branch(tree, node, fp.name))
+    else:
+        return to_source(branch(tree, node, module_name))
 
 
 def to_source(node):

@@ -11,7 +11,7 @@ import refactor
 @click.argument('name')
 def move_node(filename, name):
     with open(filename) as fp:
-        click.echo(refactor.move_node(fp, name))
+        click.echo(refactor.move_node(ast.parse(fp.read()), name, fp.name))
 
 
 @click.command()
