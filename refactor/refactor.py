@@ -3,6 +3,7 @@ Implement several functions for manipulating ASTs of modules.
 """
 import ast
 import collections
+import contextlib
 
 import astor
 
@@ -44,6 +45,27 @@ class NamesVisitor(ast.NodeVisitor):
     """Fetches all the names in an AST."""
     def __init__(self):
         self.locals_ = set()
+        self.scope_stack = []
+
+    @contextlib.contextmanager
+    def _scope(self, node):
+        self.scope_stack.append(node)
+        yield
+        assert self.scope_stack.pop() == node
+
+    def visit_FunctionDef(self, node):
+        locals_ = self.locals_.copy()
+        with self._scope(node):
+            self.generic_visit(node)
+        new_names = self.locals_ - locals_
+        self.locals_ -= new_names & get_function_arg_names(node)
+
+    def visit_Lambda(self, node):
+        locals_ = self.locals_.copy()
+        with self._scope(node):
+            self.generic_visit(node)
+        new_names = self.locals_ - locals_
+        self.locals_ -= new_names & get_function_arg_names(node)
 
     def visit_Name(self, node):
         self.locals_.add(node.id)
@@ -70,11 +92,26 @@ def get_function_locals(tree):
     return visitor.locals_
 
 
+def get_function_arg_names(node):
+    scoped_names = {name.id for name in node.args.args}
+    if node.args.vararg:
+        scoped_names.add(node.args.vararg)
+    if node.args.kwarg:
+        scoped_names.add(node.args.kwarg)
+    return scoped_names
+
+
 class ClassLocalsVisitor(ast.NodeVisitor):
     """Fetches all the names in an AST."""
     def __init__(self):
         self.locals_ = set()
         self.scope_stack = []
+
+    @contextlib.contextmanager
+    def _scope(self, node):
+        self.scope_stack.append(node)
+        yield
+        assert self.scope_stack.pop() == node
 
     def visit_Assign(self, node):
         if self.scope_stack:
@@ -85,16 +122,10 @@ class ClassLocalsVisitor(ast.NodeVisitor):
 
     def visit_FunctionDef(self, node):
         locals_ = self.locals_.copy()
-        self.scope_stack.append(node)
-        self.generic_visit(node)
-        assert self.scope_stack.pop() == node
-        scoped_names = {name.id for name in node.args.args}
-        if node.args.vararg:
-            scoped_names.add(node.args.vararg)
-        if node.args.kwarg:
-            scoped_names.add(node.args.kwarg)
+        with self._scope(node):
+            self.generic_visit(node)
         new_names = self.locals_ - locals_
-        self.locals_ -= new_names & scoped_names
+        self.locals_ -= new_names & get_function_arg_names(node)
 
     def visit_Name(self, node):
         self.locals_.add(node.id)
@@ -232,6 +263,6 @@ def get_dependencies(tree):
             deps[name] = get_function_locals(node.value)
         else:
             raise ValueError(
-                "Can't get dependencies for {} ({})".format(name, node)
+                "Can't get dependencies for {} ({})".format(name, ast.dump(node))
             )
     return deps

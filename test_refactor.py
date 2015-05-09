@@ -7,7 +7,7 @@ from refactor.refactor import (get_class_locals, get_dependencies,
 
 def test_get_function_locals():
     source = '\n'.join([
-        'def foo():',
+        'def foo(a):',
         '   x = ast.parse("")',
     ])
     tree = ast.parse(source).body[0]
@@ -46,11 +46,13 @@ def test_get_dependencies():
         '   return foo + "x"',
         'def foobar():',
         '   return bar() + foo',
+        'x = lambda y: foo',
     ]))
     assert get_dependencies(tree) == {
         'foo': set([]),
         'bar': set(['foo']),
         'foobar': set(['foo', 'bar']),
+        'x': set(['foo']),
     }
 
 
@@ -91,7 +93,6 @@ def test_get_module_locals():
         '',
         'class X(object):',
         '   pass',
-        '',
     ]
     node = ast.parse('\n'.join(source))
     assert set(get_module_locals(node)) == {'A', 'X', 'ast', 'foo', 'path',
