@@ -113,7 +113,7 @@ class ClassLocalsVisitor(ast.NodeVisitor):
             self.generic_visit(node)
         else:
             # *node* is class variable. Only visit the right hand side.
-            self.generic_visit(node.value)
+            self.visit(node.value)
 
     def visit_FunctionDef(self, node):
         locals_ = self.locals_.copy()

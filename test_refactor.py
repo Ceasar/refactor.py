@@ -59,25 +59,27 @@ def test_get_dependencies():
 
 def test_get_dependencies_class():
     tree = ast.parse('\n'.join([
-        'import foo',
-        'class Bar(foo):',
-        '   pass'
+        'import a',
+        'import b',
+        'class Bar(a):',
+        '   x = b',
     ]))
     assert get_dependencies(tree) == {
-        'foo': set([]),
-        'Bar': set(['foo']),
+        'a': set([]),
+        'b': set([]),
+        'Bar': set(['a', 'b']),
     }
 
 
 def test_get_class_locals():
     source = [
         'class Bar(object):',
-        '   classvar = list()',
+        '   x = bar',
         '   def method(self, x, y=1, *args, **kwargs):',
         '       return x + y + z',
     ]
     node = ast.parse('\n'.join(source))
-    assert get_class_locals(node) == {'list', 'object', 'z'}
+    assert get_class_locals(node) == {'bar', 'object', 'z'}
 
 
 def test_get_module_locals():
