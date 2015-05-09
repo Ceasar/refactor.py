@@ -47,6 +47,7 @@ def test_get_dependencies():
         'def foobar():',
         '   return bar() + foo',
         'x = lambda y: foo',
+        'x(lambda z: 0)',
     ]))
     assert get_dependencies(tree) == {
         'foo': set([]),

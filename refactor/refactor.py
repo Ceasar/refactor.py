@@ -35,11 +35,6 @@ class ModuleLocalsVisitor(ast.NodeVisitor):
             name = alias.asname if alias.asname else alias.name
             self.locals_[name] = node
 
-    def visit_Name(self, node):
-        # Avoid adding uses of a name
-        if node.id not in self.locals_:
-            self.locals_[node.id] = node
-
 
 class NamesVisitor(ast.NodeVisitor):
     """Fetches all the names in an AST."""
