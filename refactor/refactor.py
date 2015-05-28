@@ -32,7 +32,8 @@ class ModuleLocalsVisitor(ast.NodeVisitor):
 
     def visit_Import(self, node):
         for alias in node.names:
-            name = alias.asname if alias.asname else alias.name
+            # Take only the first part of dotted names where applicable
+            name = alias.asname if alias.asname else alias.name.split('.')[0]
             self.locals_[name] = node
 
 
